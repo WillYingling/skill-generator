@@ -37,11 +37,15 @@ function Trampoline({ athleteRef }: { athleteRef: React.RefObject<THREE.Group> }
       // Deform based on proximity (trampoline effect)
       const maxDeform = 0.5; // Maximum deformation depth (matches bottom of athlete)
       const radius = 3; // Radius of influence
-      const heightThreshold = 0.5; // Only deform when athlete is within this height above platform
+      const totalLegLength = 1.06; // Distance from root to feet
+      const heightThreshold = totalLegLength + 0.5; // Deform when feet are within 0.5m above trampoline
       
-      if (distance < radius && athletePos.y < heightThreshold) {
-        // Deformation strength based on how close to ground (0 = at ground, heightThreshold = no deform)
-        const heightFactor = Math.max(0, 1 - athletePos.y / heightThreshold);
+      // Calculate feet position
+      const feetHeight = athletePos.y - totalLegLength;
+      
+      if (distance < radius && feetHeight < 0.5) {
+        // Deformation strength based on how close feet are to ground (0 = at ground, 0.5 = no deform)
+        const heightFactor = Math.max(0, 1 - feetHeight / 0.5);
         const deformation = -maxDeform * (1 - distance / radius) * heightFactor;
         positionAttribute.setZ(i, z + deformation);
       } else {
