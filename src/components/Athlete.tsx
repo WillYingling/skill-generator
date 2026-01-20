@@ -6,8 +6,8 @@ import FrameMarker from './FrameMarker';
 // Complete athlete position state
 export interface AthletePosition {
   height: number;           // Height of athlete center of mass (meters)
-  rotation: number;         // Rotation around X-axis (radians) - somersault
-  twist: number;            // Rotation around Y-axis (radians) - twist
+  rotation: number;         // Rotation around X-axis (number of rotations, 1.0 = 2π) - somersault
+  twist: number;            // Rotation around Y-axis (number of rotations, 1.0 = 2π) - twist
   joints: {
     leftShoulder: number;   // Rotation angle in radians (1 DOF)
     rightShoulder: number;  // Rotation angle in radians (1 DOF)
@@ -32,16 +32,28 @@ const Athlete = forwardRef<THREE.Group, AthleteProps>((props, ref) => {
   const rightShinRef = useRef<THREE.Group>(null);
   
   // Subscribe this component to the render-loop, rotate the mesh every frame
+  // Separate refs for flip and twist groups
+  const flipGroupRef = useRef<THREE.Group>(null);
+  const twistGroupRef = useRef<THREE.Group>(null);
+  
   useFrame(() => {
     // Apply position from props if provided
     if (props.athletePosition) {
       const { height, rotation, twist, joints } = props.athletePosition;
       
-      // Apply height, rotation (somersault), and twist to main group
+      // Apply height to main group
       if (ref && typeof ref !== 'function' && ref.current) {
         ref.current.position.y = height;
-        ref.current.rotation.x = rotation;
-        ref.current.rotation.y = twist;
+      }
+      
+      // Apply flip (X rotation) around world X axis first
+      if (flipGroupRef.current) {
+        flipGroupRef.current.rotation.x = rotation * 2 * Math.PI;
+      }
+      
+      // Apply twist (Y rotation) around body axis
+      if (twistGroupRef.current) {
+        twistGroupRef.current.rotation.y = twist * 2 * Math.PI;
       }
       
       // Apply joint rotations
@@ -98,6 +110,10 @@ const Athlete = forwardRef<THREE.Group, AthleteProps>((props, ref) => {
     <group {...props} ref={ref}>
       {/* Frame marker at athlete root */}
       <FrameMarker position={[0, 0, 0]} size={1} />
+      {/* Flip group - applies X rotation around world axis first */}
+      <group ref={flipGroupRef}>
+        {/* Twist group - applies Y rotation around body axis */}
+        <group ref={twistGroupRef}>
       
       {/* Left Leg */}
       <group ref={leftThighRef} position={[-0.15, 0, 0]}>
@@ -154,6 +170,8 @@ const Athlete = forwardRef<THREE.Group, AthleteProps>((props, ref) => {
           <mesh position={[0, -(armLength / 2), 0]} renderOrder={1} material={boxMaterials}>
             <boxGeometry args={[armWidth, armLength, legDepth]} />
           </mesh>
+        </group>
+      </group>
         </group>
       </group>
     </group>
