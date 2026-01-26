@@ -41,8 +41,18 @@ function AthleteController({ skills }: AthleteControllerProps) {
   const SkillCycleTime = JumpPhase + BouncePhase;
   const TotalCycleTime = SkillCycleTime * skills.length;
   const Gravity = -9.81; // m/s^2
+  let firstFrame = true;
 
   useFrame((state) => {
+    if (skills.length === 0) {
+      // No skills to animate, keep athlete in default position
+      return;
+    }
+    
+    if (firstFrame) {
+      state.clock.elapsedTime = 0;
+      firstFrame = false;
+    }
     const totalElapsedTime = state.clock.elapsedTime % TotalCycleTime;
     
     // Determine which skill we're currently on
@@ -50,15 +60,29 @@ function AthleteController({ skills }: AthleteControllerProps) {
     const cycleTime = totalElapsedTime % SkillCycleTime;
     
     // Update cumulative twist when transitioning to a new skill
-    if (currentSkillIndex !== previousSkillIndexRef.current) {
+    if (currentSkillIndex !== previousSkillIndexRef.current && 
+        previousSkillIndexRef.current >= 0 && 
+        previousSkillIndexRef.current < skills.length) {
       const previousSkill = skills[previousSkillIndexRef.current];
-      const endTwist = previousSkill.positions[previousSkill.positions.length - 1].twist;
-      cumulativeTwistRef.current += endTwist;
+      if (previousSkill && previousSkill.positions && previousSkill.positions.length > 0) {
+        const endTwist = previousSkill.positions[previousSkill.positions.length - 1].twist;
+        cumulativeTwistRef.current += endTwist;
+      }
       previousSkillIndexRef.current = currentSkillIndex;
     }
     
+    // Ensure we have a valid skill index
+    if (currentSkillIndex >= skills.length) {
+      return;
+    }
+    
     // Get the current skill's positions and timestamps
-    const { positions, timestamps } = skills[currentSkillIndex];
+    const currentSkill = skills[currentSkillIndex];
+    if (!currentSkill || !currentSkill.positions || !currentSkill.timestamps) {
+      return;
+    }
+    
+    const { positions, timestamps } = currentSkill;
     const originalTime = cycleTime; // Keep original time for interpolation
     let curTime = cycleTime;
     let height = 0;
@@ -143,15 +167,6 @@ function AthleteController({ skills }: AthleteControllerProps) {
       
       const interpolate = (start: number, end: number, f: number) => {
         return start + (end - start) * f;
-      };
-      
-      // Helper to find shortest angular path between two angles
-      const shortestAnglePath = (start: number, end: number): number => {
-        let diff = end - start;
-        // Normalize difference to [-π, π]
-        while (diff > Math.PI) diff -= 2 * Math.PI;
-        while (diff < -Math.PI) diff += 2 * Math.PI;
-        return start + diff;
       };
       
       const totalLegLength = 2 * 0.48 + 0.1;

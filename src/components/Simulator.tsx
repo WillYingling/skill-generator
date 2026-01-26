@@ -55,7 +55,7 @@ function Simulator({ skills }: SimulatorProps) {
 
   return (
     <Canvas
-      style={{ width: "90vw", height: "400px", border: "1px solid red" }}
+      style={{ width: "100%", height: "500px", borderRadius: "8px" }}
       camera={{ position: [x, y, z], fov: 55 }}
     >
       <OrbitControls target={[0, 5, 0]} enableZoom={true} enablePan={false} />

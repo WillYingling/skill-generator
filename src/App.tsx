@@ -1,176 +1,83 @@
-import { useState, useEffect } from "react";
-import { Stack, Button, IconButton, ButtonGroup } from "@mui/material";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import Simulator from "./components/Simulator";
-import type { Skill } from "./components/AthleteController";
+import {
+  Stack,
+  AppBar,
+  Toolbar,
+  Typography,
+  Container,
+  Box
+} from "@mui/material";
+import SportsGymnasticsIcon from "@mui/icons-material/SportsGymnastics";
+import RoutineBuilder from "./components/RoutineBuilder";
+import SkillLibrary from "./components/SkillLibrary";
+import SimulatorModal from "./components/SimulatorModal";
 import type { SkillDefinition } from "./models/SkillDefinition";
-import { Position } from "./models/SkillDefinition";
-import { skillDefinitionToSkill } from "./utils/skillConverter";
+import { useSkillDefinitions, useRoutine } from "./hooks/useSkills";
+import { useSimulator } from "./hooks/useSimulator";
 
 function App() {
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [skillDefinitions, setSkillDefinitions] = useState<SkillDefinition[]>(
-    [],
-  );
-  const [routine, setRoutine] = useState<SkillDefinition[]>([]);
-  const [renderProperties, setRenderProperties] = useState({
-    stallDuration: 0.1,
-    stallRotation: 0.1,
-    kickoutDuration: 0.5,
-    kickoutRotation: 0.5,
-  });
+  const { skillDefinitions, selectedPositions, selectPosition } = useSkillDefinitions();
+  const { routine, addToRoutine, clearRoutine, randomizeRoutine } = useRoutine(skillDefinitions);
+  const { skills, simulatorOpen, playSkill, playRoutine, closeSimulator } = useSimulator();
 
-  // Load skill definitions from JSON file
-  useEffect(() => {
-    fetch("/skills.json")
-      .then((response) => response.json())
-      .then((data: SkillDefinition[]) => {
-        setSkillDefinitions(data);
-        console.log("Loaded skill definitions:", data);
-      })
-      .catch((error) => console.error("Error loading skills:", error));
-  }, []);
+  const handlePlaySkill = (definition: SkillDefinition) => {
+    const selectedPos = selectedPositions[definition.name];
+    playSkill(definition, selectedPos);
+  };
 
-  function generateSkills() {
-    console.log("Generating skills from definitions");
-    // Convert all skill definitions to animated skills
-    if (skillDefinitions.length > 0) {
-      const animatedSkills = skillDefinitions.map((def) =>
-        skillDefinitionToSkill(def, renderProperties),
-      );
-      setSkills(animatedSkills);
-    }
-  }
+  const handleAddToRoutine = (definition: SkillDefinition) => {
+    const selectedPos = selectedPositions[definition.name];
+    addToRoutine(definition, selectedPos);
+  };
 
-  function playSkill(definition: SkillDefinition) {
-    const skill = skillDefinitionToSkill(definition, renderProperties);
-    setSkills([skill]);
-  }
-
-  function playSkillWithPosition(
-    definition: SkillDefinition,
-    position: Position,
-  ) {
-    const modifiedDef = { ...definition, position };
-    const skill = skillDefinitionToSkill(modifiedDef, renderProperties);
-    setSkills([skill]);
-  }
-
-  function addToRoutine(definition: SkillDefinition) {
-    setRoutine([...routine, definition]);
-  }
-
-  function playRoutine() {
-    if (routine.length > 0) {
-      const animatedSkills = routine.map((def) =>
-        skillDefinitionToSkill(def, renderProperties),
-      );
-      setSkills(animatedSkills);
-    }
-  }
-
-  function clearRoutine() {
-    setRoutine([]);
-  }
+  const handlePlayRoutine = () => {
+    playRoutine(routine);
+  };
 
   return (
-    <Stack p={1} flexGrow={1} justifyContent="center" alignItems="center">
-      <Button
-        variant="contained"
-        onClick={generateSkills}
-        disabled={skillDefinitions.length === 0}
-      >
-        Generate Skills
-      </Button>
-      <Stack
-        direction="row"
-        sx={{
-          minWidth: "50%",
-          justifyContent: "space-around",
-        }}
-      >
-        <Stack
-          id="routineHolder"
-          sx={{
-            minWidth: "25%",
-            border: "2px solid #1976d2",
-            borderRadius: 2,
-            p: 2,
-            mr: 2,
-          }}
-        >
-          <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-            <strong>Routines</strong>
-            {routine.length > 0 && (
-              <>
-                <IconButton size="small" onClick={playRoutine} color="primary">
-                  <PlayArrowIcon />
-                </IconButton>
-                <IconButton size="small" onClick={clearRoutine} color="error">
-                  <DeleteIcon />
-                </IconButton>
-              </>
-            )}
-          </Stack>
-          {routine.map((def, idx) => (
-            <div key={idx}>
-              {idx + 1}. {def.name} ({def.position})
-            </div>
-          ))}
-        </Stack>
-        <Stack
-          sx={{
-            minWidth: "50%",
-            border: "2px solid #2e7d32",
-            borderRadius: 2,
-            p: 2,
-          }}
-        >
-          <strong>Skill Library</strong>
-          {skillDefinitions.map((def, idx) => (
-            <Stack key={idx} direction="row" alignItems="center" spacing={1}>
-              <IconButton
-                size="small"
-                onClick={() => playSkill(def)}
-                color="primary"
-              >
-                <PlayArrowIcon />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={() => addToRoutine(def)}
-                color="success"
-              >
-                <AddIcon />
-              </IconButton>
-              <div>
-                {def.name} - {def.flips}x{def.twists}
-              </div>
-              {def.possiblePositions && def.possiblePositions.length > 1 && (
-                <ButtonGroup size="small" variant="outlined">
-                  {def.possiblePositions.map((pos) => (
-                    <Button
-                      key={pos}
-                      onClick={() => playSkillWithPosition(def, pos)}
-                    >
-                      {pos}
-                    </Button>
-                  ))}
-                </ButtonGroup>
-              )}
+    <Box sx={{ flexGrow: 1, minHeight: '100vh' }}>
+      <AppBar position="static" elevation={0}>
+        <Toolbar>
+          <SportsGymnasticsIcon sx={{ mr: 2 }} />
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Trampoline Skill Generator
+          </Typography>
+        </Toolbar>
+      </AppBar>
+      
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Stack spacing={4} alignItems="center">
+          <Box sx={{ width: '100%', maxWidth: 1400 }}>
+            <Stack 
+              direction={{ xs: 'column', md: 'row' }} 
+              spacing={3}
+              sx={{ width: '100%' }}
+            >
+              <RoutineBuilder
+                routine={routine}
+                onPlayRoutine={handlePlayRoutine}
+                onClearRoutine={clearRoutine}
+                onRandomizeRoutine={randomizeRoutine}
+                skillDefinitionsLength={skillDefinitions.length}
+              />
+
+              <SkillLibrary
+                skillDefinitions={skillDefinitions}
+                selectedPositions={selectedPositions}
+                onPlaySkill={handlePlaySkill}
+                onAddToRoutine={handleAddToRoutine}
+                onSelectPosition={selectPosition}
+              />
             </Stack>
-          ))}
+          </Box>
         </Stack>
-      </Stack>
+      </Container>
 
-      <Simulator skills={skills} />
-
-      <Button variant="contained" onClick={() => setSkills([])}>
-        Clear Skills
-      </Button>
-    </Stack>
+      <SimulatorModal 
+        open={simulatorOpen}
+        skills={skills}
+        onClose={closeSimulator}
+      />
+    </Box>
   );
 }
 

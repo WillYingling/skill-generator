@@ -48,10 +48,74 @@
     "possiblePositions": ["StraightArmsDown", "Tuck"]
   },
   {
+    "name": "Randy",
+    "startingPosition": "Standing",
+    "flips": 1,
+    "twists": 2.5,
+    "position": "StraightArmsDown",
+    "possiblePositions": ["StraightArmsDown"]
+  },
+  {
+    "name": "Adolf",
+    "startingPosition": "Standing",
+    "flips": 1,
+    "twists": 3.5,
+    "position": "StraightArmsDown",
+    "possiblePositions": ["StraightArmsDown"]
+  },
+  {
     "name": "Straight Jump",
     "startingPosition": "Standing",
     "flips": 0,
     "twists": 0,
+    "position": "StraightArmsDown",
+    "possiblePositions": ["StraightArmsDown"]
+  },
+  {
+    "name": "Triffis",
+    "startingPosition": "Standing",
+    "flips": 3,
+    "twists": 0.5,
+    "position": "Tuck",
+    "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"]
+  },
+  {
+    "name": "Stomach Drop",
+    "startingPosition": "Standing",
+    "flips": 0.25,
+    "twists": 0,
+    "position": "StraightArmsDown",
+    "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"]
+  },
+  {
+    "name": "3/4 Front Flip",
+    "startingPosition": "Standing",
+    "flips": 0.75,
+    "twists": 0,
+    "position": "StraightArmsDown",
+    "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"]
+  },
+  {
+    "name": "Front 1 and 3",
+    "startingPosition": "Standing",
+    "flips": 1.75,
+    "twists": 0,
+    "position": "StraightArmsDown",
+    "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"]
+  },
+  {
+    "name": "Front 2 and 3",
+    "startingPosition": "Standing",
+    "flips": 2.75,
+    "twists": 0,
+    "position": "StraightArmsDown",
+    "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"]
+  },
+  {
+    "name": "Front Full",
+    "startingPosition": "Standing",
+    "flips": 1,
+    "twists": 1,
     "position": "StraightArmsDown",
     "possiblePositions": ["StraightArmsDown"]
   }
