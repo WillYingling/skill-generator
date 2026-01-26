@@ -130,7 +130,7 @@ function AthleteController({ skills }: AthleteControllerProps) {
       };
 
       return {
-        height: interpolate(currentPosition.height, nextPosition.height, factor),
+        height: interpolate(currentPosition.height ?? 0, nextPosition.height ?? 0, factor),
         rotation: interpolate(currentPosition.rotation, nextPosition.rotation, factor),
         twist: interpolate(currentPosition.twist, nextPosition.twist, factor) + cumulativeTwistRef.current,
         joints: {

@@ -18,10 +18,20 @@
   {
     "name": "Back Flip",
     "startingPosition": "Standing",
-    "flips": -1,
+    "flips": 1,
     "twists": 0,
     "position": "Tuck",
-    "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"]
+    "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"],
+    "isBackSkill": true
+  },
+  {
+    "name": "Double Back",
+    "startingPosition": "Standing",
+    "flips": 2,
+    "twists": 0,
+    "position": "Tuck",
+    "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"],
+    "isBackSkill": true
   },
   {
     "name": "Barani",
@@ -86,6 +96,15 @@
     "twists": 0,
     "position": "StraightArmsDown",
     "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"]
+  },
+  {
+    "name": "Back Drop",
+    "startingPosition": "Standing",
+    "flips": 0.25,
+    "twists": 0,
+    "position": "StraightArmsDown",
+    "possiblePositions": ["Tuck", "Pike", "StraightArmsDown"],
+    "isBackSkill": true
   },
   {
     "name": "3/4 Front Flip",
