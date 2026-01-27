@@ -1,5 +1,6 @@
 import { Position } from "../models/SkillDefinition";
 import type { SkillDefinition } from "../models/SkillDefinition";
+import { CONSTANTS } from "../constants";
 
 /**
  * Display position names in a user-friendly way
@@ -33,21 +34,37 @@ export function getFlipCategory(flips: number): string {
 /**
  * Group skills by flip category
  */
-export function groupSkillsByFlips(skills: SkillDefinition[]): Record<string, SkillDefinition[]> {
-  return skills.reduce((groups, skill) => {
-    const category = getFlipCategory(skill.flips);
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(skill);
-    return groups;
-  }, {} as Record<string, SkillDefinition[]>);
+export function groupSkillsByFlips(
+  skills: SkillDefinition[],
+): Record<string, SkillDefinition[]> {
+  const groups = skills.reduce(
+    (groups, skill) => {
+      const category = getFlipCategory(skill.flips);
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(skill);
+      return groups;
+    },
+    {} as Record<string, SkillDefinition[]>,
+  );
+
+  // Sort skills within each group by difficulty (ascending order - easier first, harder last)
+  Object.keys(groups).forEach((category) => {
+    groups[category].sort(
+      (a, b) => calculateDifficultyScore(a) - calculateDifficultyScore(b),
+    );
+  });
+
+  return groups;
 }
 
 /**
  * Sort flip categories in logical order
  */
-export function sortFlipCategories(categories: [string, SkillDefinition[]][]): [string, SkillDefinition[]][] {
+export function sortFlipCategories(
+  categories: [string, SkillDefinition[]][],
+): [string, SkillDefinition[]][] {
   return categories.sort(([a], [b]) => {
     const getFlipNumber = (category: string) => {
       if (category === "No Flips") return -1;
@@ -61,4 +78,106 @@ export function sortFlipCategories(categories: [string, SkillDefinition[]][]): [
     };
     return getFlipNumber(a) - getFlipNumber(b);
   });
+}
+
+function roundToTwo(num: number): number {
+  return Math.round(num * 100) / 100;
+}
+
+function rotationScore(skill: SkillDefinition): number {
+  let score = 0;
+  let rotation = skill.flips;
+  // Base score
+  if (rotation >= 1.0 && rotation < 2.0) {
+    score += 0.5; // 1 point for first flip
+    rotation -= 1.0;
+  } else if (rotation >= 2.0 && rotation < 3.0) {
+    score += 1.0; // 1 point for first two flips
+    if (skill.isBackSkill) {
+      score += 0.1; // Additional 0.1 for back skills
+    }
+    rotation -= 2.0;
+  } else if (rotation >= 3.0 && rotation < 4.0) {
+    score += 1.6; // 1 point for first three flips
+    if (skill.isBackSkill) {
+      score += 0.2; // Additional 0.2 for back skills
+    }
+    rotation -= 3.0;
+  } else if (rotation >= 4.0) {
+    score += 2.2; // 1 point for first four flips
+    if (skill.isBackSkill) {
+      score += 0.3; // Additional 0.3 for back skills
+    }
+    rotation -= 4.0;
+  }
+
+  // Partial flips
+  score += Math.floor(rotation / 0.25) * 0.1; // 1 point per additional flip
+
+  return score;
+}
+
+function twistScore(skill: SkillDefinition): number {
+  let score = 0;
+  let halfTwists = Math.floor(skill.twists / 0.5);
+  score += halfTwists * 0.1; // 1 point per half twist
+  if (skill.flips >= 4) {
+    score *= 3; // Bonus for twists on quadruple flips
+  } else if (skill.flips >= 3) {
+    score += Math.max(0, halfTwists - 2) * 0.2; // Bonus for twists on triple flips
+  } else if (skill.flips >= 2) {
+    score += Math.max(0, halfTwists - 2) * 0.1; // Bonus for twists on double flips
+  }
+  return score;
+}
+
+function positionScore(skill: SkillDefinition): number {
+  if (skill.position === Position.Tuck) {
+    return 0; // No position score for tuck
+  }
+
+  let flips = Math.floor(skill.flips);
+  if (flips === 1 && skill.twists !== 0) {
+    return 0; // No position score for 1 flip with twists
+  }
+
+  return flips * 0.1;
+}
+
+/**
+ * Calculate difficulty score based on USAG Trampoline scoring principles
+ */
+export function calculateDifficultyScore(skill: SkillDefinition): number {
+  if (
+    skill.flips == 0 &&
+    skill.twists == 0 &&
+    skill.position === Position.Straight
+  ) {
+    return 0; // No difficulty for straight jumps
+  }
+
+  return Math.max(
+    roundToTwo(rotationScore(skill) + twistScore(skill) + positionScore(skill)),
+    CONSTANTS.SCORING.MIN_DIFFICULTY,
+  );
+}
+
+export function routineDifficultyScore(
+  routine: SkillDefinition[],
+  womens: boolean,
+): number {
+  let totalScore = routine.reduce(
+    (sum, skill) => sum + calculateDifficultyScore(skill),
+    0,
+  );
+
+  const tripleThreshold = womens
+    ? CONSTANTS.FLIP_THRESHOLDS.TRIPLE_THRESHOLD_WOMENS
+    : CONSTANTS.FLIP_THRESHOLDS.TRIPLE_THRESHOLD_MENS;
+  const tripleCount = routine.filter((skill) => skill.flips >= 3).length;
+  if (tripleCount > tripleThreshold) {
+    totalScore += (tripleCount - tripleThreshold) * 0.3;
+  }
+
+  return roundToTwo(totalScore);
 }

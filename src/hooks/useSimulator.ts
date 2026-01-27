@@ -3,6 +3,7 @@ import type { Skill } from "../components/AthleteController";
 import type { SkillDefinition } from "../models/SkillDefinition";
 import { Position } from "../models/SkillDefinition";
 import { skillDefinitionToSkill } from "../utils/skillConverter";
+import { CONSTANTS } from "../constants";
 
 /**
  * Hook for managing simulator state and actions
@@ -11,18 +12,21 @@ export function useSimulator() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [renderProperties] = useState({
-    stallDuration: 0.1,
-    stallRotation: 0.1,
-    kickoutDuration: 0.5,
-    kickoutRotation: 0.5,
+    stallDuration: CONSTANTS.ANIMATION.STALL_DURATION,
+    stallRotation: CONSTANTS.ANIMATION.STALL_ROTATION,
+    kickoutDuration: CONSTANTS.ANIMATION.KICKOUT_DURATION,
+    kickoutRotation: CONSTANTS.ANIMATION.KICKOUT_ROTATION,
   });
 
-  const playSkill = (definition: SkillDefinition, selectedPosition?: Position) => {
+  const playSkill = (
+    definition: SkillDefinition,
+    selectedPosition?: Position,
+  ) => {
     let skillToPlay = definition;
     if (selectedPosition) {
       skillToPlay = { ...definition, position: selectedPosition };
     }
-    
+
     const skill = skillDefinitionToSkill(skillToPlay, renderProperties);
     setSkills([skill]);
     setSimulatorOpen(true);
@@ -30,9 +34,16 @@ export function useSimulator() {
 
   const playRoutine = (routine: SkillDefinition[]) => {
     if (routine.length > 0) {
-      const animatedSkills = routine.map((def) =>
-        skillDefinitionToSkill(def, renderProperties),
-      );
+      let cumulativeTwist = 0;
+      const animatedSkills = routine.map((def) => {
+        const skill = skillDefinitionToSkill(
+          def,
+          renderProperties,
+          cumulativeTwist,
+        );
+        cumulativeTwist += def.twists;
+        return skill;
+      });
       setSkills(animatedSkills);
       setSimulatorOpen(true);
     }
@@ -48,6 +59,6 @@ export function useSimulator() {
     simulatorOpen,
     playSkill,
     playRoutine,
-    closeSimulator
+    closeSimulator,
   };
 }

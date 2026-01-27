@@ -17,12 +17,19 @@ export interface RenderProperties {
 export function skillDefinitionToSkill(
   definition: SkillDefinition,
   renderProps: RenderProperties,
+  cumulativeTwist: number = 0,
 ): Skill {
   const keyframes: AthletePosition[] = [];
   const timestamps: number[] = [];
 
   // Determine rotation direction based on skill type
-  const rotationMultiplier = definition.isBackSkill ? -1 : 1;
+  let rotationMultiplier = definition.isBackSkill ? -1 : 1;
+  
+  // If cumulative twist results in athlete facing backward (odd multiples of 0.5), invert rotation
+  const halfTwists = Math.floor(cumulativeTwist * 2);
+  if (halfTwists % 2 !== 0) {
+    rotationMultiplier *= -1;
+  }
 
   // Start position
   keyframes.push({
@@ -48,6 +55,16 @@ export function skillDefinitionToSkill(
     let positionDuration =
       1 - renderProps.kickoutDuration - renderProps.stallDuration;
     let positionSpeed = positionRotation / positionDuration;
+
+    let positionTransitionRotation = 0.18;
+    // Start of position phase
+    keyframes.push({
+      rotation: (renderProps.stallRotation + positionTransitionRotation) * rotationMultiplier,
+      twist: 0,
+      joints: positions[definition.position],
+    });
+    timestamps.push(renderProps.stallDuration + Math.abs(positionTransitionRotation) / Math.abs(positionSpeed));
+
 
     // Start of kickout
     let kickoutRotation = (definition.flips - renderProps.kickoutRotation) * rotationMultiplier;
